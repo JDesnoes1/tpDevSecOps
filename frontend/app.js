@@ -1,4 +1,4 @@
-// Change this if your API runs elsewhere (CI, container, remote)
+// Change this if your API runs elsewhere (CI, container, remote) test
 const API_URL = (localStorage.getItem("API_URL") || "http://127.0.0.1:8000");
 document.getElementById("apiUrlLabel").textContent = API_URL;
 
