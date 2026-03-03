@@ -6,7 +6,7 @@ on:
 
 jobs:
   precommit:
-    name: Pre-commit (formatter & linter)
+    name: Pre-commit
     runs-on: ubuntu-latest
 
     steps:
