@@ -1,0 +1,89 @@
+name: Containers
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  quality-build-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate docker compose
+        run: docker compose -f docker-compose.yml config
+
+      - name: Run backend quality stage
+        run: docker build -f backend/Dockerfile --target quality .
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image (local)
+        if: github.ref != 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          target: runtime
+          tags: taskmanager-backend:ci
+          load: true
+
+      - name: Build frontend image (local)
+        if: github.ref != 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          tags: taskmanager-frontend:ci
+          load: true
+
+      - name: Scan backend
+        if: github.ref != 'refs/heads/main'
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: taskmanager-backend:ci
+          format: table
+          exit-code: "1"
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
+      - name: Scan frontend
+        if: github.ref != 'refs/heads/main'
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: taskmanager-frontend:ci
+          format: table
+          exit-code: "1"
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
+      - name: Login to GHCR
+        if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push backend (main)
+        if: github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          target: runtime
+          push: true
+          tags: ghcr.io/${{ github.repository }}-backend:latest
+
+      - name: Build & push frontend (main)
+        if: github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: frontend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}-frontend:latest
