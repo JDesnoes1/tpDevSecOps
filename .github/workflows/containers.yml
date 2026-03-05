@@ -77,7 +77,7 @@ jobs:
           file: backend/Dockerfile
           target: runtime
           push: true
-          tags: ghcr.io/${{ github.repository }}-backend:latest
+          tags: ghcr.io/jdesnoes1/tpdevsecops-backend:latest
 
       - name: Build & push frontend (main)
         if: github.ref == 'refs/heads/main'
@@ -86,4 +86,4 @@ jobs:
           context: .
           file: frontend/Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}-frontend:latest
+          tags: ghcr.io/jdesnoes1/tpdevsecops-backend:latest
